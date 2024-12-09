@@ -21,8 +21,9 @@ db.connect((error) => {
 function registration(userName, password, email) {
   return new Promise((resolve, reject) => {
     db.query(
-      `insert into  Users (username,password_hash,email) values  ('${userName}','${password}','${email}')`,
+      `insert into  users (username,password_hash,email) values  ('${userName}','${password}','${email}')`,
       (err) => {
+        console.log(err)
         if (err) {
           reject("alredy existed");
         } else {

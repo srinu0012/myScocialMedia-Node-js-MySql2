@@ -50,7 +50,7 @@ App.use(bodyParser.json());
 App.post("/register", async (req, res) => {
   // generated hashed pasword
   let hashedPassword = await hashPassword(req.body.password);
-
+console.log(req.body.userName, hashedPassword, req.body.email)
   // share to the database registerd data
   registration(req.body.userName, hashedPassword, req.body.email)
     .then((data) => {
@@ -443,5 +443,6 @@ const port = process.env.port;
 
 // listen server
 App.listen(Number(port), () => {
+
   console.log("server started");
 });
