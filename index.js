@@ -141,7 +141,7 @@ App.post("/upload", upload.single("image"), (req, res) => {
 
 
   App.get("/profileImages/:token",(req,res)=>{
-
+    
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
         
 
