@@ -12,7 +12,7 @@ const multer=require("multer")
 const path = require("path");
 
 
-// dotenv configuration
+
 require("dotenv").config()
 
 
