@@ -3,6 +3,8 @@ let sql = require("mysql2");
 require("dotenv").config();
 
 
+
+
 const db = sql.createConnection({
   host: process.env.host,
   user: process.env.user,
@@ -10,6 +12,10 @@ const db = sql.createConnection({
   database: process.env.database,
 });
 
+db.connect((error) => {
+  if(error){console.log(error)}
+  console.log("connected database");
+});
 // registration
 
 function registration(userName, password, email) {
@@ -29,16 +35,20 @@ function registration(userName, password, email) {
 // =====================================================================================================================
 // login
 
-function login(username) {
+function login(userName) {
   return new Promise((resolve, reject) => {
+    
     db.query(
-      `SELECT user_id, username, password_hash FROM users WHERE username = '${username}'`,
+      `SELECT user_id, username, password_hash FROM users WHERE username = '${userName}'`,
       (err, rows) => {
         if (err) {
+          console.log(err)
           reject("invalid credentials");
         } else {
           if (rows.length > 0) {
+            
             resolve(rows[0]);
+
           } else {
             reject("invalid credentials");
           }
@@ -397,9 +407,7 @@ WHERE
 // ==============================================================================================================================================
 
 
-db.connect(() => {
-  console.log("connected database");
-});
+
 
 module.exports = {
   registration,
