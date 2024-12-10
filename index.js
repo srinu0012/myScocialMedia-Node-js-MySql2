@@ -122,7 +122,7 @@ App.post("/upload", upload.single("image"), (req, res) => {
   }
 
   // Construct the URL for the uploaded image
-  const imageUrl = `http://localhost:3300/uploads/${req.file.filename}`;
+  const imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
 
   const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
 
