@@ -215,7 +215,7 @@ App.post("/addPost", upload.single("image"), async (req, res) => {
 
     let imageUrl = null;
     if (req.file) {
-      imageUrl = `http://localhost:3300/uploads/${req.file.filename}`;
+      imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
     }
 
     addpost(userId, description, imageUrl, tags, location, feeling)
