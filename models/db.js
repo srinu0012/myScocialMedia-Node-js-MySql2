@@ -209,6 +209,7 @@ function setLike(post_id, type) {
   }
   
   return new Promise((resolve, reject) => {
+
     db.query(querys, (err, data) => {
       if (err) {
         reject(err);
