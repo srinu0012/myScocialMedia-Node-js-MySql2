@@ -177,7 +177,7 @@ function getPostMethod(user_id) {
     p.feeling,           -- Include feeling
     p.tags               -- Include tags
 FROM 
-    Users u
+    users u
 LEFT JOIN 
     profile_info pi ON u.user_id = pi.user_id
 LEFT JOIN 
@@ -236,7 +236,7 @@ function getProfilePostMethod(user_id) {
     p.likes,
     p.comments
 FROM 
-    Users u
+    users u
 INNER JOIN 
     profile_info pi ON u.user_id = pi.user_id
 LEFT JOIN 
