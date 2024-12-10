@@ -122,7 +122,12 @@ App.post("/upload", upload.single("image"), (req, res) => {
   }
 
   // Construct the URL for the uploaded image
-  const imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+  // const imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+
+  const protocol = req.protocol; // 'http' or 'https'
+  const host = req.get('host'); // The hostname and port of the server
+  const flodername= "uploads"
+  const imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
 
   const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
 
@@ -215,7 +220,11 @@ App.post("/addPost", upload.single("image"), async (req, res) => {
 
     let imageUrl = null;
     if (req.file) {
-      imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+      // imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+      const protocol = req.protocol; // 'http' or 'https'
+      const host = req.get('host'); // The hostname and port of the server
+      const flodername= "uploads"
+      imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
     }
 
     addpost(userId, description, imageUrl, tags, location, feeling)
