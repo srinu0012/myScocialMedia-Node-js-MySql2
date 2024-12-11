@@ -178,7 +178,7 @@ function getPostMethod(user_id) {
     p.tags               -- Include tags
 FROM 
     users u
-LEFT JOIN 
+inner JOIN 
     profile_info pi ON u.user_id = pi.user_id
 LEFT JOIN 
     user_images profile_image ON u.user_id = profile_image.user_id AND profile_image.image_type = 'profile'
