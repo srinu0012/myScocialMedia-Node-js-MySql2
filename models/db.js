@@ -305,9 +305,9 @@ function postComment(post_id, user_name, text) {
 
 function getComments(post_id){
   return new Promise((resolve, reject) => {
-    db.query(`UPDATE posts
-      SET comments = comments + 1
-      WHERE id = ?;`,[post_id],(err)=>{})
+    // db.query(`UPDATE posts
+    //   SET comments = comments + 1
+    //   WHERE id = ?;`,[post_id],(err)=>{})
     db.query(`SELECT * FROM comments WHERE post_id = ? order by created_at desc`,[post_id],(err,rows)=>{
       if(err){
         reject("Error fetching comments")
