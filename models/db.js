@@ -186,8 +186,9 @@ LEFT JOIN
     posts p ON u.user_id = p.user_id
 ORDER BY 
     p.created_at DESC;  -- Order posts by created_at in descending order
-where p.id > 1
+
 `;
+
 
     db.query(query, (err, results) => {
       if (err) {
