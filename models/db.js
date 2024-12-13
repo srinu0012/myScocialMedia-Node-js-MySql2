@@ -143,6 +143,7 @@ function addpost(userId, description, imageUrl, tags, location, feeling) {
     INSERT INTO posts (user_id, description, image_url,tags,location,feeling)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
+  console.log(tags)
     db.query(
       query,
       [userId, description, imageUrl, tags, location, feeling],

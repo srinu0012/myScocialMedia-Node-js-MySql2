@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const { hashPassword } = require("./bycryptpassgen");
-
+const AWS = require("aws-sdk");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 
@@ -102,49 +102,69 @@ App.post("/login", async (req, res) => {
 
 // =====================================================================================================
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Directory to save uploaded files
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
+
+
+
+// creating aws s3
+
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION,
 });
 
+
+
+// Configure multer for in-memory storage
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-//   API to handle image upload
-App.post("/upload", upload.single("image"), (req, res) => {
+App.post("/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
-  // Construct the URL for the uploaded image
-  // const imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+  });
 
-  const protocol = req.protocol; // 'http' or 'https'
-  const host = req.get('host'); // The hostname and port of the server
-  const flodername= "uploads"
-  const imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: `uploads/${Date.now()}-${req.file.originalname}`, // File path in S3
+    Body: req.file.buffer, // File data
+    ContentType: req.file.mimetype,
+  };
 
-  const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
+  try {
+    const data = await s3.upload(params).promise();
 
+      const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
+   
   // Extract user ID from the decoded payload
-  const userId = decoded.userId;
 
-  // adding images into database
-  insertProfileImages(userId, req.body.type, imageUrl)
-    .then((data) => {
-      res
-        .status(200)
-        .json({ message: "Image uploaded successfully", imageUrl });
-    })
-    .catch((err) => {
-      return res.status(400).json({ err: "No file uploaded" });
-    });
+  const userId = decoded.userId;
+    insertProfileImages(userId, req.body.type, data.Location)
+        .then((data) => {
+          res
+            .status(200)
+            .json({ message: "Image uploaded successfully", imageUrl: data.Location });
+        })
+        .catch((err) => {
+          return res.status(400).json({ err: "No file uploaded" });
+        });
+   
+  } catch (error) {
+    console.error("S3 Upload Error:", error); // Log the detailed error
+    res.status(500).json({ error: "Failed to upload image", details: error.message });
+  }
 });
+
+
+
+
+
 // ================================================================================================
 // intial profile images
 
@@ -166,7 +186,7 @@ App.get("/profileImages/:token", (req, res) => {
 // ===========================================================================
 
 //   Serve uploaded files statically
-App.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// App.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // =====================================================================================================
 
@@ -210,32 +230,79 @@ App.get("/profileInfo/:token", (req, res) => {
 });
 
 // =========================================================================
+// App.post("/addPost", upload.single("image"), async (req, res) => {
+//   const { description, tags, location, feeling } = req.body;
+//   const token = req.headers.authorization.split(" ")[1];
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     const userId = decoded.userId;
+
+//     let imageUrl = null;
+//     if (req.file) {
+//       // imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
+//       const protocol = req.protocol; // 'http' or 'https'
+//       const host = req.get('host'); // The hostname and port of the server
+//       const flodername= "uploads"
+//       imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
+//     }
+
+//     addpost(userId, description, imageUrl, tags, location, feeling)
+//       .then((message) => {
+//         res.status(200).json({ message: "Post added successfully!", imageUrl });
+//       })
+//       .catch((error) => {
+//         res.status(400).json({ message: "An error occurred." });
+//       });
+//   } catch (error) {
+//     res.status(500).json({ message: "An error occurred.in catch" });
+//   }
+// });
+
 App.post("/addPost", upload.single("image"), async (req, res) => {
   const { description, tags, location, feeling } = req.body;
-  const token = req.headers.authorization.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // const token = req.headers.authorization.split(" ")[1];
+  const token =req.body.token
 
+  try {
+    // Decode JWT token to get the user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
     let imageUrl = null;
+
+    // Initialize AWS S3 instance
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION,
+    });
+
     if (req.file) {
-      // imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
-      const protocol = req.protocol; // 'http' or 'https'
-      const host = req.get('host'); // The hostname and port of the server
-      const flodername= "uploads"
-      imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
+      const params = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: `posts/${Date.now()}-${req.file.originalname}`, // File path in S3
+        Body: req.file.buffer, // File data
+        ContentType: req.file.mimetype,
+      };
+
+      // Upload file to S3
+      const uploadResult = await s3.upload(params).promise();
+      imageUrl = uploadResult.Location; // Get the URL of the uploaded image
     }
 
+    // Save post details in the database
     addpost(userId, description, imageUrl, tags, location, feeling)
       .then((message) => {
         res.status(200).json({ message: "Post added successfully!", imageUrl });
       })
       .catch((error) => {
-        res.status(400).json({ message: "An error occurred." });
+        console.error("Database Error:", error); // Log detailed database error
+        res.status(400).json({ message: "An error occurred while saving the post." });
       });
   } catch (error) {
-    res.status(500).json({ message: "An error occurred.in catch" });
+    console.error("JWT or S3 Error:", error); // Log JWT or S3-related errors
+    res.status(500).json({ message: "An error occurred in catch block." });
   }
 });
 
