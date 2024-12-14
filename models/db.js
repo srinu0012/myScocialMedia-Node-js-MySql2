@@ -23,7 +23,7 @@ function registration(userName, password, email) {
     db.query(
       `insert into  users (username,password_hash,email) values  ('${userName}','${password}','${email}')`,
       (err) => {
-        console.log(err)
+
         if (err) {
           reject("alredy existed");
         } else {
@@ -43,7 +43,6 @@ function login(userName) {
       `SELECT user_id, username, password_hash FROM users WHERE username = '${userName}'`,
       (err, rows) => {
         if (err) {
-          console.log(err)
           reject("invalid credentials");
         } else {
           if (rows.length > 0) {
@@ -64,7 +63,7 @@ function login(userName) {
 // function profile images set in database
 
 function insertProfileImages(id, img_type, image) {
-  console.log(image,"image",id,"id",img_type,"image type")
+
   return new Promise((resolve, reject) => {
     db.query(
       `DELETE FROM user_images WHERE user_id =${id} AND image_type ='${img_type}';`,
@@ -399,7 +398,6 @@ WHERE
     f.follower_id = ${id};`;
     db.query(query, (err, data) => {
       if (err) {
-        console.log(err)
         reject(err);
       } else {
         resolve(data);

@@ -51,7 +51,7 @@ App.use(bodyParser.json());
 App.post("/register", async (req, res) => {
   // generated hashed pasword
   let hashedPassword = await hashPassword(req.body.password);
-  console.log(req.body.userName, hashedPassword, req.body.email);
+
   // share to the database registerd data
   registration(req.body.userName, hashedPassword, req.body.email)
     .then((data) => {
@@ -113,14 +113,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 App.post("/upload", upload.single("file"), async (req, res) => {
-  console.log(
-    req.file,
-    "file",
-    req.body.token,
-    "token",
-    req.file.originalname,
-    "original name"
-  );
+
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -137,10 +130,10 @@ App.post("/upload", upload.single("file"), async (req, res) => {
     Body: req.file.buffer, // File data
     ContentType: req.file.mimetype,
   };
-  console.log(req.file.buffer, "buffer", req.file.mimetype, "mimetype");
+
   try {
     const data = await s3.upload(params).promise();
-    console.log(data)
+
     const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
 
     // Extract user ID from the decoded payload
@@ -148,7 +141,7 @@ App.post("/upload", upload.single("file"), async (req, res) => {
     const userId = decoded.userId;
     insertProfileImages(userId, req.body.type, data.Location)
       .then((result) => {
-        console.log(result);
+ 
         return res
           .status(200)
           .json({
@@ -187,19 +180,13 @@ App.get("/profileImages/:token", (req, res) => {
 
 // ===========================================================================
 
-//   Serve uploaded files statically
-// App.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// =====================================================================================================
 
 // updateprofileinfo
 
 App.post("/updateProfileInfo", (req, res) => {
   const { name, description } = req.body;
 
-  // if (!name && !description) {
-  //   return res.status(400).json({ message: "Name or description must be provided" });
-  // }
+
 
   const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
 
@@ -232,34 +219,7 @@ App.get("/profileInfo/:token", (req, res) => {
 });
 
 // =========================================================================
-// App.post("/addPost", upload.single("image"), async (req, res) => {
-//   const { description, tags, location, feeling } = req.body;
-//   const token = req.headers.authorization.split(" ")[1];
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-//     const userId = decoded.userId;
-
-//     let imageUrl = null;
-//     if (req.file) {
-//       // imageUrl = `https://myscocialmedia-node-js-mysql2.onrender.com/${req.file.filename}`;
-//       const protocol = req.protocol; // 'http' or 'https'
-//       const host = req.get('host'); // The hostname and port of the server
-//       const flodername= "uploads"
-//       imageUrl = `${protocol}://${host}/${flodername}/${req.file.filename}`
-//     }
-
-//     addpost(userId, description, imageUrl, tags, location, feeling)
-//       .then((message) => {
-//         res.status(200).json({ message: "Post added successfully!", imageUrl });
-//       })
-//       .catch((error) => {
-//         res.status(400).json({ message: "An error occurred." });
-//       });
-//   } catch (error) {
-//     res.status(500).json({ message: "An error occurred.in catch" });
-//   }
-// });
 
 App.post("/addPost", upload.single("image"), async (req, res) => {
   const { description, tags, location, feeling } = req.body;
