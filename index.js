@@ -12,6 +12,7 @@ const path = require("path");
 
 require("dotenv").config();
 
+
 // db requirements
 
 const {
@@ -50,7 +51,7 @@ App.use(bodyParser.json());
 App.post("/register", async (req, res) => {
   // generated hashed pasword
   let hashedPassword = await hashPassword(req.body.password);
-console.log(req.body.userName, hashedPassword, req.body.email)
+  console.log(req.body.userName, hashedPassword, req.body.email);
   // share to the database registerd data
   registration(req.body.userName, hashedPassword, req.body.email)
     .then((data) => {
@@ -68,42 +69,36 @@ console.log(req.body.userName, hashedPassword, req.body.email)
 // login api
 
 App.post("/login", async (req, res) => {
- 
   const { userName, password } = req.body;
-  
+
   // Check if user exists
   login(userName)
     .then(async (data) => {
       let { user_id, username, password_hash } = data;
       // Compare the entered password with the stored hash
       const isPasswordValid = await bcrypt.compare(password, password_hash);
-      
+
       if (isPasswordValid) {
         // Generate JWT token
         const token = jwt.sign(
           { userId: user_id, username: username },
           process.env.JWT_SECRET
         );
-        
 
         // sending sucess status code and jwt token
-       res.status(200)
-       res.send(token);
-      } else { 
+        res.status(200);
+        res.send(token);
+      } else {
         res.status(400);
         res.send("invalid credentials");
       }
     })
     .catch((err) => {
-    
       res.send(err);
     });
 });
 
 // =====================================================================================================
-
-
-
 
 // creating aws s3
 
@@ -113,14 +108,19 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
 });
 
-
-
 // Configure multer for in-memory storage
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 App.post("/upload", upload.single("file"), async (req, res) => {
-  console.log(req.file,"file",req.body.token,"token",req.file.originalname,"original name")
+  console.log(
+    req.file,
+    "file",
+    req.body.token,
+    "token",
+    req.file.originalname,
+    "original name"
+  );
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -137,34 +137,35 @@ App.post("/upload", upload.single("file"), async (req, res) => {
     Body: req.file.buffer, // File data
     ContentType: req.file.mimetype,
   };
-console.log(req.file.buffer,"buffer",req.file.mimetype,"mimetype")
+  console.log(req.file.buffer, "buffer", req.file.mimetype, "mimetype");
   try {
     const data = await s3.upload(params).promise();
+    console.log(data)
+    const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
 
-      const decoded = jwt.verify(req.body.token, process.env.JWT_SECRET);
-   
-  // Extract user ID from the decoded payload
+    // Extract user ID from the decoded payload
 
-  const userId = decoded.userId;
+    const userId = decoded.userId;
     insertProfileImages(userId, req.body.type, data.Location)
-        .then((data) => {
-          res
-            .status(200)
-            .json({ message: "Image uploaded successfully", imageUrl: data.Location });
-        })
-        .catch((err) => {
-          return res.status(400).json({ err: "No file uploaded" });
-        });
-   
+      .then((result) => {
+        console.log(result);
+        return res
+          .status(200)
+          .json({
+            message: "Image uploaded successfully",
+            imageUrl: data.Location,
+          });
+      })
+      .catch((err) => {
+        return res.status(400).json({ err: "No file uploaded" });
+      });
   } catch (error) {
     console.error("S3 Upload Error:", error); // Log the detailed error
-    res.status(500).json({ error: "Failed to upload image", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Failed to upload image", details: error.message });
   }
 });
-
-
-
-
 
 // ================================================================================================
 // intial profile images
@@ -263,7 +264,7 @@ App.get("/profileInfo/:token", (req, res) => {
 App.post("/addPost", upload.single("image"), async (req, res) => {
   const { description, tags, location, feeling } = req.body;
   // const token = req.headers.authorization.split(" ")[1];
-  const token =req.headers.authorization.slice(7,)
+  const token = req.headers.authorization.slice(7);
 
   try {
     // Decode JWT token to get the user ID
@@ -299,7 +300,9 @@ App.post("/addPost", upload.single("image"), async (req, res) => {
       })
       .catch((error) => {
         console.error("Database Error:", error); // Log detailed database error
-        res.status(400).json({ message: "An error occurred while saving the post." });
+        res
+          .status(400)
+          .json({ message: "An error occurred while saving the post." });
       });
   } catch (error) {
     console.error("JWT or S3 Error:", error); // Log JWT or S3-related errors
@@ -521,6 +524,5 @@ const port = process.env.port;
 
 // listen server
 App.listen(Number(port), () => {
-
   console.log("server started");
 });
