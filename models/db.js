@@ -64,6 +64,7 @@ function login(userName) {
 // function profile images set in database
 
 function insertProfileImages(id, img_type, image) {
+  console.log(image,"image",id,"id",img_type,"image type")
   return new Promise((resolve, reject) => {
     db.query(
       `DELETE FROM user_images WHERE user_id =${id} AND image_type ='${img_type}';`,

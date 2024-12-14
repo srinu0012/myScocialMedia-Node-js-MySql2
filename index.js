@@ -120,6 +120,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 App.post("/upload", upload.single("file"), async (req, res) => {
+  console.log(req.file,"file",req.body.token,"token",req.file.originalname,"original name")
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -136,7 +137,7 @@ App.post("/upload", upload.single("file"), async (req, res) => {
     Body: req.file.buffer, // File data
     ContentType: req.file.mimetype,
   };
-
+console.log(req.file.buffer,"buffer",req.file.mimetype,"mimetype")
   try {
     const data = await s3.upload(params).promise();
 
@@ -262,7 +263,7 @@ App.get("/profileInfo/:token", (req, res) => {
 App.post("/addPost", upload.single("image"), async (req, res) => {
   const { description, tags, location, feeling } = req.body;
   // const token = req.headers.authorization.split(" ")[1];
-  const token =req.body.token
+  const token =req.headers.authorization.slice(7,)
 
   try {
     // Decode JWT token to get the user ID
@@ -281,7 +282,7 @@ App.post("/addPost", upload.single("image"), async (req, res) => {
     if (req.file) {
       const params = {
         Bucket: process.env.S3_BUCKET_NAME,
-        Key: `posts/${Date.now()}-${req.file.originalname}`, // File path in S3
+        Key: `uploads/${Date.now()}-${req.file.originalname}`, // File path in S3
         Body: req.file.buffer, // File data
         ContentType: req.file.mimetype,
       };
@@ -349,6 +350,7 @@ App.post("/setlike/:post_id", (req, res) => {
       res.send(err);
     });
 });
+
 // ====================================================================================================
 App.get("/searchUsernames", async (req, res) => {
   const searchQuery = req.query.query; // Query parameter `q` for the search term
